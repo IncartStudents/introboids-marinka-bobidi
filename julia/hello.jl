@@ -40,7 +40,22 @@ function update!(state::WorldState)
                 end
                 sum_rast= (neighbor_velocity[1]/length(neighbor)+sum_rast[1],
                 neighbor_velocity[2]/length(neighbor)+sum_rast[2])
-            end
+              end
+        position = state.boids[i]
+        pos_x = position[1]
+        pos_y = position[2]
+        if pos_x < 5
+          sum_rast = (sum_rast[1] + (30 - pos_x)/3, sum_rast[2])
+        end    
+        if pos_x > 25
+          sum_rast = (sum_rast[1] - (30 - pos_x)/3, sum_rast[2])
+        end   
+        if pos_y < 5
+          sum_rast = (sum_rast[1], sum_rast[2] + (30 - pos_x)/3)
+        end    
+        if pos_y > 25
+          sum_rast = (sum_rast[1], sum_rast[2] - (30 - pos_x)/3)
+        end   
         end
          # Если найдены соседи, то направляем боид в направлении суммарного rast
          if length(neighbors) > 0
@@ -59,6 +74,8 @@ function update!(state::WorldState)
         # Обновление позиции и скорости
         state.boids[i] = (mod(new_position[1], state.width), mod(new_position[2], state.height))
         state.velocities[i] = new_velocity
+
+      
     end
     return nothing
 end
@@ -68,7 +85,7 @@ function (@main)(ARGS)
     w = 30
     n_boids = 10
     state = WorldState(n_boids, h, w)
-    anim = @animate for time = 1:100
+    anim = @animate for time = 1:1000
         update!(state)
         boids = state.boids
         scatter(boids, xlim = (0, state.width), ylim = (0, state.height), label=false)
