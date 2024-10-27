@@ -8,22 +8,21 @@ mutable struct WorldState
     width::Float64
     function WorldState(n_boids, h, w)
         boids = [(rand(0:w), rand(0:h)) for _ in 1:n_boids]
-        speed = 2
+        speed = 5
         velocities = [(rand(-1.0:0.1:1.0) * speed, rand(-1.0:0.1:1.0) * speed) for _ in 1:n_boids]
         new(boids, velocities, h, w)
     end
 end
 
 function update!(state::WorldState)
-    max_radius = 20
+    max_radius = 10
     min_radius = 5
     for i in 1:length(state.boids)
         boid = state.boids[i]
         velocity = state.velocities[i]
-        
-        # Находим боидов в радиусе 
         neighbors = []
         sum_rast = (0.0, 0.0)
+
         for j in 1:length(state.boids)
             if i != j
                 neighbor = state.boids[j]
@@ -54,21 +53,27 @@ function update!(state::WorldState)
         new_position = (boid[1] + new_velocity[1], boid[2] + new_velocity[2])
            
 
+          # Проверка границ и отталкивание от границ
+        if new_position[1] > state.width || new_position[1] < 0
+        new_velocity = (-new_velocity[1], new_velocity[2])
+        end
+        if new_position[2] > state.height || new_position[2] < 0
+        new_velocity = (new_velocity[1], -new_velocity[2])
+        end
 
-      
-        # Обновление позиции и скорости
+        # Обновление позиции и скорости с учетом изменения
+        new_position = (boid[1] + new_velocity[1], boid[2] + new_velocity[2])
         state.boids[i] = (mod(new_position[1], state.width), mod(new_position[2], state.height))
         state.velocities[i] = new_velocity
     end
-    return nothing
 end
 
 function (@main)(ARGS)
     h = 30
     w = 30
-    n_boids = 10
+    n_boids = 20
     state = WorldState(n_boids, h, w)
-    anim = @animate for time = 1:100
+    anim = @animate for time = 1:200
         update!(state)
         boids = state.boids
         scatter(boids, xlim = (0, state.width), ylim = (0, state.height), label=false)
