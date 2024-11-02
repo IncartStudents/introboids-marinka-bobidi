@@ -8,70 +8,57 @@ mutable struct WorldState
     width::Float64
     function WorldState(n_boids, h, w)
         boids = [(rand(0:w), rand(0:h)) for _ in 1:n_boids]
-        speed = 5
+        speed = 2
         velocities = [(rand(-1.0:0.1:1.0) * speed, rand(-1.0:0.1:1.0) * speed) for _ in 1:n_boids]
         new(boids, velocities, h, w)
     end
 end
 
-function update!(state::WorldState)
-    max_radius = 10
-    min_radius = 5
-    for i in 1:length(state.boids)
-        boid = state.boids[i]
-        velocity = state.velocities[i]
-        neighbors = []
-        sum_rast = (0.0, 0.0)
-
-        for j in 1:length(state.boids)
-            if i != j
-                neighbor = state.boids[j]
-                neighbor_velocity= state.velocities[j]
-                rast= (-boid[1] + neighbor[1], -boid[2] + neighbor[2])
-                dist = sqrt(rast[1]^2 + rast[2]^2)
-                if dist < max_radius
-                    sum_rast = (sum_rast[1] + rast[1], sum_rast[2] + rast[2])
-                    push!(neighbors, neighbor)
-                end
-                if dist < min_radius 
-                    sum_rast = (sum_rast[1] - rast[1]*2,
-                     sum_rast[2] - rast[2]*2)
-                end
-                sum_rast= (neighbor_velocity[1]/length(neighbor)+sum_rast[1],
-                neighbor_velocity[2]/length(neighbor)+sum_rast[2])
-            end
-        end
-         # Если найдены соседи, то направляем боид в направлении суммарного rast
-         if length(neighbors) > 0
-            avg_rast = (sum_rast[1] / length(neighbors), sum_rast[2] / length(neighbors))
-            new_velocity = (velocity[1] * 0.9 + avg_rast[1] * 0.1, velocity[2] * 0.9 + avg_rast[2] * 0.1)
-        else
-            new_velocity = velocity
-        end
-
-        # Обновляем позиции
-        new_position = (boid[1] + new_velocity[1], boid[2] + new_velocity[2])
-           
-
-          # Проверка границ и отталкивание от границ
-        if new_position[1] > state.width || new_position[1] < 0
-        new_velocity = (-new_velocity[1], new_velocity[2])
-        end
-        if new_position[2] > state.height || new_position[2] < 0
-        new_velocity = (new_velocity[1], -new_velocity[2])
-        end
-
-        # Обновление позиции и скорости с учетом изменения
-        new_position = (boid[1] + new_velocity[1], boid[2] + new_velocity[2])
-        state.boids[i] = (mod(new_position[1], state.width), mod(new_position[2], state.height))
-        state.velocities[i] = new_velocity
-    end
+function boid_movement(state::WorldState, i::Int, max_radius::Int64, centering_factor::Float64) 
+  sum_velocity = (0.0, 0.0) 
+  centerX = 0.0 
+  centerY = 0.0 
+  neighbor_count = 0 
+  for j in 1:length(state.boids) 
+    if i != j
+       distance = sqrt((state.boids[j][1] - state.boids[i][1])^2 + (state.boids[j][2] - state.boids[i][2])^2) 
+       if distance < max_radius 
+        sum_velocity = (sum_velocity[1] + state.velocities[j][1], sum_velocity[2] + state.velocities[j][2]) 
+        centerX += state.boids[j][1] 
+        centerY += state.boids[j][2] 
+        neighbor_count += 1 
+      end 
+    end 
+  end 
+  
+  if neighbor_count > 0 
+    # Выравнивание скоростей 
+    sum_velocity = (sum_velocity[1] / neighbor_count, sum_velocity[2] / neighbor_count)
+    state.velocities[i] = sum_velocity 
+    # Движение к центру масс 
+    centerX /= neighbor_count 
+    centerY /= neighbor_count 
+    state.velocities[i] = (state.velocities[i][1] + (centerX - state.boids[i][1]) * centering_factor,
+                          state.velocities[i][2] + (centerY - state.boids[i][2]) * centering_factor) 
+  end 
 end
 
-function (@main)(ARGS)
-    h = 30
-    w = 30
-    n_boids = 20
+# Функция для обновления состояния
+function update!(state::WorldState) 
+  max_radius = 10
+  centering_factor = 0.005
+  for i in 1:length(state.boids) 
+    boid_movement(state, i, max_radius, centering_factor) 
+    # Обновление позиции 
+    new_position = (state.boids[i][1] + state.velocities[i][1], state.boids[i][2] + state.velocities[i][2]) 
+    state.boids[i] = (mod(new_position[1], state.width), mod(new_position[2], state.height)) 
+  end 
+end
+
+  function (@main)(ARGS)
+    h = 80
+    w = 80
+    n_boids = 10
     state = WorldState(n_boids, h, w)
     anim = @animate for time = 1:200
         update!(state)
