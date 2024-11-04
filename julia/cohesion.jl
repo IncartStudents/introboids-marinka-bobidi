@@ -57,9 +57,9 @@ end
 function main(ARGS)
     h = 80.0
     w = 80.0
-    n_boids = 10
+    n_boids = 50
     state = WorldState(n_boids, h, w)
-    anim = @animate for time in 1:200
+    anim = @animate for time in 1:100
         update!(state)
         boids = state.boids
         scatter(boids, xlim=(0, state.width), ylim=(0, state.height), label=false)

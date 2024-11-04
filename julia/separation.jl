@@ -33,14 +33,14 @@ function separation(state::WorldState, i::Int, min_radius::Int, factor::Float64)
       center = (sum_neigh_cord[1]/neighbor_count, sum_neigh_cord[2]/neighbor_count)
       return (-(center[1]-state.boids[i][1]) * factor,  -(center[2]-state.boids[i][2])*factor)
     else
-        return (rand(-1.0:0.1:1.0) * 1, rand(-1.0:0.1:1.0) * 1)
+        return state.velocities[i]
     end
 end
 
 # Функция для обновления состояния boids
 function update!(state::WorldState)
     factor= 0.1
-    min_radius= 10.0
+    min_radius= 10
 
     for i in 1:length(state.boids)
         # Вызов функции alignment для расчета новой скорости
@@ -57,9 +57,9 @@ end
 function main(ARGS)
     h = 80.0
     w = 80.0
-    n_boids = 10
+    n_boids = 30
     state = WorldState(n_boids, h, w)
-    anim = @animate for time in 1:200
+    anim = @animate for time in 1:100
         update!(state)
         boids = state.boids
         scatter(boids, xlim=(0, state.width), ylim=(0, state.height), label=false)
