@@ -39,7 +39,8 @@ function boid_movement(state::WorldState, i::Int, max_radius::Int64, min_radius:
 
     if neighbor_count_max > 0
         centermax = (sum_neigh_cord_max[1]/neighbor_count_max,
-         sum_neigh_cord_max[2]/neighbor_count_max)
+        sum_neigh_cord_max[2]/neighbor_count_max)
+       
         if neighbor_count_min <= 0
             separation = (0,0)
         else
@@ -81,30 +82,28 @@ end
 
 # Функция для обновления состояния
 function update!(state::WorldState) 
-  max_radius = 20
-  min_radius =3
-  factor_center = 0.01
-  factor_separation= 0.5
+    max_radius = 20
+    min_radius =3
+    factor_center = 0.01
+    factor_separation= 0.5
     margin = 5
-  for i in 1:length(state.boids) 
-    new_velocity = boid_movement(state, i, max_radius, min_radius, factor_center, factor_separation) 
+    for i in 1:length(state.boids) 
+        new_velocity = boid_movement(state, i, max_radius, min_radius, factor_center, factor_separation) 
     # Обновление позиции 
-     new_position = (state.boids[i][1] + state.velocities[i][1],
-     state.boids[i][2] + state.velocities[i][2]) 
+        new_position = (state.boids[i][1] + state.velocities[i][1],
+        state.boids[i][2] + state.velocities[i][2]) 
     # Проверка границ
-    state.boids[i] = new_position 
-    state.boids[i] = (mod(new_position[1], state.width), mod(new_position[2], state.height))
-    
-    state.velocities[i] = new_velocity
-    # keepWithinBounds(state, i, margin)
-
-  end 
+        keepWithinBounds(state, i, margin)
+        state.boids[i] = new_position 
+        state.boids[i] = (mod(new_position[1], state.width), mod(new_position[2], state.height))
+        state.velocities[i] = new_velocity
+    end 
 end
 
   function (@main)(ARGS)
     h = 80
     w = 80
-    n_boids = 100
+    n_boids = 150
     state = WorldState(n_boids, h, w)
     anim = @animate for time = 1:200
         update!(state)
