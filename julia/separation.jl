@@ -15,34 +15,36 @@ mutable struct WorldState
 end
 
 # Функция для расчета новой скорости на основе соседей
-function alignment(state::WorldState, i::Int, max_radius::Int)
-    sum_velocity = (0, 0)
+function separation(state::WorldState, i::Int, min_radius::Int, factor::Float64)
     neighbor_count = 0
+    sum_neigh_cord=(0,0)
 
     for j in 1:length(state.boids)
         if i != j
             distance = sqrt((state.boids[j][1] - state.boids[i][1])^2 + (state.boids[j][2] - state.boids[i][2])^2)
-            if distance < max_radius
-                sum_velocity = (sum_velocity[1] + state.velocities[j][1], sum_velocity[2] + state.velocities[j][2])
+            if distance < min_radius
+                sum_neigh_cord = (sum_neigh_cord[1]+ state.boids[j][1], sum_neigh_cord[2]+ state.boids[j][2])
                 neighbor_count += 1
             end
         end
     end
 
     if neighbor_count > 0
-        return (sum_velocity[1] / neighbor_count, sum_velocity[2] / neighbor_count)
+      center = (sum_neigh_cord[1]/neighbor_count, sum_neigh_cord[2]/neighbor_count)
+      return (-(center[1]-state.boids[i][1]) * factor,  -(center[2]-state.boids[i][2])*factor)
     else
-        return state.velocities[i]
+        return (rand(-1.0:0.1:1.0) * 1, rand(-1.0:0.1:1.0) * 1)
     end
 end
 
 # Функция для обновления состояния boids
 function update!(state::WorldState)
-    max_radius = 5
+    factor= 0.1
+    min_radius= 10.0
 
     for i in 1:length(state.boids)
         # Вызов функции alignment для расчета новой скорости
-        new_velocity = alignment(state, i, max_radius)
+        new_velocity = separation(state, i, min_radius, factor)
 
         # Обновление позиции и проверка границ
         new_position = (state.boids[i][1] + new_velocity[1], state.boids[i][2] + new_velocity[2])
@@ -62,7 +64,7 @@ function main(ARGS)
         boids = state.boids
         scatter(boids, xlim=(0, state.width), ylim=(0, state.height), label=false)
     end
-    gif(anim, "boids_aligment.gif", fps=10)
+    gif(anim, "boids_separation.gif", fps=10)
 end
 
 end
