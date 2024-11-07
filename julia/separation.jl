@@ -43,7 +43,7 @@ function update!(state::WorldState)
     min_radius= 10
 
     for i in 1:length(state.boids)
-        # Вызов функции alignment для расчета новой скорости
+
         new_velocity = separation(state, i, min_radius, factor)
 
         # Обновление позиции и проверка границ
